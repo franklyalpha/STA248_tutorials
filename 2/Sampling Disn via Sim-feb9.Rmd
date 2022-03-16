@@ -1,0 +1,194 @@
+---
+title: "STA248 - Sampling Distributions via Simulation"
+author: "Prof. K. H. Wong"
+date: "02/02/2021"
+header-includes:
+   - \usepackage{amssymb}
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=F, warning=F, eval=T, echo=T}
+library(tidyverse)
+library(gridExtra)
+```
+
+## How to Simulate the Sampling Distribution
+We know that if $X_1, X_2, ..., X_n \sim F$, that a function of these random variables will likely follow a different distribution, that is $g(X_1, X_2, ..., X_n) \nsim F$. Sometimes, we can use transformation methods to derive the distribution of $Y = g(X_1, X_2, ..., X_n)$, but particularly in the multivariate cases, this is tedious and often impossible. 
+
+We learned through Law of Large Numbers, however, that as we allow the sample size to grow large, the sample mean will converge to the expectation of the distribution, provided the distribution has finite variance. 
+
+If we consider the special case of trying to estimate the *density* of a random variable, we can do this by using the result of LLN. For every value of $y$, we can define the event $A = {Y \in [y-h, y+h]}$. In this case, $A \sim Ber(p)$ and $E(A) = p = P(Y \in [y-h, y+h])$, and we saw that this can be well approximated by $f(y) * 2h$, the rectangular area of the density function at $y$ with width of $2h$. i.e. If we can generate the histogram of $Y$, then it can serve as a visualization of the distribution of $Y$ by representing the density.
+
+Consider the example in the video lecture. We want to assess the quality of estimators between $T_1, T_2, T_3$. We already determined that $T_1$ is unbiased. We desire unbiasedness and consistency -- if somehow we can easily correct the bias of the other two estimators, and their variance is even smaller, then they could be a better estimator than $T_1$, despite the fact that they are biased.
+
+* $T_1 = \cfrac{n(X_i = 0)}{n}$
+* $T_2 = e^{-\bar{X}_n}$
+* $T_3 = e^{-S_n^2}$
+
+How do we observe these estimators?
+
+1. Collect data
+2. Find the value of each estimator from the data
+3. Repeat many times to get a large sample of observations of each of these estimators. If we plot the distribution of the sample estimates, we should get an accurate representation of their probability distribution.
+
+If we want to estimate the probability distribution of each estimator, then we need to observe many estimates to get a sense of their probability distributions. Repeat above many times. Let's suppose $\lambda=2$. Our sample size is $n=30$. We need to ensure that each random sample we generate is also $n=30$. Why?
+
+# Goal:
+Recover the sampling distributions (i.e. the distribution of the estimators which are RVs) through simulation.
+
+```{r}
+library(tidyverse)
+library(gridExtra) 
+#This allows you to use grid.arrange
+#To plot multiple graphs into a single image
+set.seed(202)
+B = 10000
+est <-  tibble(T1 = numeric(), T2=numeric(), T3=numeric())
+for (i in 1:B){
+  ran_sample <- rpois(n=30, 2)
+  est[i,]=cbind(sum(ran_sample==0)/30, exp(-mean(ran_sample)), exp(-var(ran_sample)))
+}
+```
+The actual $P(X = 0) = e^{-2} = 0.1353$. Let's see how these three estimators compared:
+```{r warning=FALSE, fig.height=10, fig.width=7, results='hide'}
+means <- c(mean(est$T1), mean(est$T2), mean(est$T3))
+#You can add a vertical label to the two lines plotted to highlight
+#how the estimated E(estimator) compares with the target parameter
+#P(X = 0) by adding a geom_text() layer
+
+t1 <- ggplot(est, aes(x=T1, y=..density..))+
+  geom_histogram(colour='black', fill='skyblue1', bins=floor(1+3.3*log10(B)))+
+  geom_density(adjust=3)+
+  geom_vline(xintercept=c(0.1353, means[1]), colour=c('red', 'blue'),
+             linetype=c(1, 2), size=1)+
+  geom_text(aes(x=means[1], y=0, label='E(T1)'), size=3, angle=90,
+            nudge_x=0.01, nudge_y=7)+
+  labs(x=expression(T[1]), y='Density', title='Sim. Sampling Distn T1')+
+  theme_classic()
+
+t2 <- ggplot(est, aes(x=T2, y=..density..))+
+  geom_histogram(colour='black', fill='olivedrab2', binwidth=3.48*sd(est$T2)*B^(-1/3))+
+  geom_density()+
+    geom_vline(xintercept=c(0.1353, means[2]), colour=c('red', 'blue'),
+               linetype=c(1, 2), size=1)+
+  geom_text(aes(x=means[2], y=0, label='E(T2)'), size=3, angle=90,
+            nudge_x=0.005, nudge_y=16.5)+
+  labs(x=expression(T[2]), y='Density', title='Sim. Sampling Distn T2')+
+  theme_classic()
+  
+t3 <- ggplot(est, aes(x=T3, y=..density..))+
+  geom_histogram(colour='black', fill='tomato1', binwidth=3.48*sd(est$T3)*B^(-1/3))+
+  geom_density()+
+  geom_vline(xintercept=c(0.1353, means[3]), colour=c('red', 'blue'),
+             linetype=c(1, 2), size=1)+
+  geom_text(aes(x=means[3], y=0, label='E(T3)'), size=3, angle=90,
+            nudge_x=0.01, nudge_y=5.25)+
+  labs(x=expression(T[3]), y='Density', title='Sim. Sampling Distn T3')+
+  theme_classic()
+grid.arrange(t1, t2, t3, ncol=1)
+```
+
+## How to Simulate Data from an Uncommon Distribution
+Let's do a bit of review. One way to address transformations is to use the distribution method. This requires a couple of things:
+
+* We need the distribution function (CDF) of X, and it needs to be invertible
+* The transformation (we'll only consider univariate) also has an inverse that exists 
+
+Then for a known random variable $X$ with distribution function $F_X$ or density function $f_X$, we can derive the distribution function of $Y$, $F_Y$ and its density function $f_Y$ by doing the following:
+\begin{align*}
+F_Y(y) &= P(Y \leq y)\\
+&= P(g(X) \leq y)\\
+&= P(X \leq g^{-1}(y))\\
+&= F_X(g^{-1}(y))
+\end{align*}
+
+Differentiating with respect to $y$ will yield the density function of $Y$. Using this method, we can show that for any random variable $X$ with an invertible cumulative distribution function $F_X$, the transformation $Y = F^{-1}_X(U)$  where $U \sim Unif[0. 1]$ will yield a random variable $Y$ that has the same distribution function as $X$. i.e. if $X \sim F_X$ and $U \sim Unif[0, 1]$, then $Y = F^{-1}_X(U) \sim F$:
+\begin{align*}
+F_Y(y) &= P(Y \leq y) \\
+&= P(F^{-1}_X(U) \leq y)\\
+&= P(U \leq F_X(y))\\
+&= F_X(y)
+\end{align*}
+
+This means that $P(Y \leq y) = P(X \leq y)$, or $Y$ has the same distribution as $X$.We can always verify by plotting a histogram of the simulated data against its density function! 
+
+Consider: $X \sim exp(\theta)$ where $f(x) = \cfrac{1}{\theta}\,e^{-x/\theta}, \, x >0$. 
+
+Its CDF is $F(x) = 1-e^{-x/\theta}$ and $F^{-1}(u) = -\theta \cdot ln(1-u), \, u \in (0, 1)$.
+
+Let's simulate from an exponential distribution with $\theta=2$ and compare it to the density of the exponential.
+```{r}
+set.seed(202)
+u <- runif(1000, 0, 1) #simulate from a uniform(0,1) distribution
+
+sim.exp <-  data.frame('x'=-2*log(1-u)) 
+#use the fact that F^(-1)(U) has the same distribution as F
+#We could, of course, use exp(scale=2) here but let's practice
+#using transformations instead
+
+sim.hist <- ggplot(sim.exp, aes(x=x, y=..density..))+
+  geom_histogram(fill='orange', bins=30)+
+  geom_density(adjust=1.5)+
+  labs(title='Simulated Values from an Exp(2) Distribution', y='Density', 
+       x='Simulated Values')+
+  theme_classic()
+
+x <- seq(0, max(sim.exp$x), by=0.1)
+y <- exp(-x/2)/2
+exponential <- data.frame('x'=x, 'y'=y)
+exp.graph <- ggplot(exponential, aes(x=x, y=y))+
+  geom_line()
+
+sim.hist+
+  geom_line(exponential, mapping=aes(x=x, y=y), size=1, color='blue')
+```
+
+This is another tool to have under your belt! When it comes to simulating, you are no longer restricted to only distributions that can be generated in R. You can expand it to any distribution that has an invertible CDF. Consider you have a data set that has a density function $f(x) = \cfrac{3}{2}(1-x^2), \, x \in [0, 1]$ and you wanted to examine the probability distribution of some function of data from this distribution (e.g. the MAD of a random sample, or some other variable $Y = g(X_1, X_2, ..., X_n)$), this will allow you not only simulate data, but to then implement what we did at the beginning of the document and simulate the sampling distribution as well. 
+
+### Sync Example Feb. 9/2021
+
+Generate samples of $W$ from:
+\[ f(w) = \cfrac{3}{2 \sqrt{512}}\sqrt{w}, \, w \in (0, 8) \]
+
+1. Find the CDF: 
+\[ F_W(w) = \begin{cases}
+0, & w < 0\\
+\sqrt{\cfrac{w^3}{512}}, & 0 \leq w < 8\\
+1, & w \geq 1
+\end{cases} \]
+2. Find the inverse of CDF: 
+$F^{-1}(u) = \sqrt[3]{512 \, u^2}, \, u \in (0, 1)$
+3. Generate a random sample $U_1, U_2, ..., U_n$ of size $n$ from $U[0,1]$ and use it to compute $F^{-1}(u)$. The resulting values are sampled data from the distribution with PDF $f(w)$ or CDF $F(w)$.
+
+`latex2exp` package makes it easier to use LaTeX in plot labels. Documentation [\textcolor{blue}{here}](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)
+```{r}
+library(tidyverse)
+library(latex2exp) 
+sim.w <- tibble(u=runif(10000, 0, 1), w=(512*u^2)^(1/3), y =3*sqrt(w)/(2*sqrt(512)))
+```
+Here, column w is generated data from the distribution of W using the uniform sampled values, column y are the density function values of w. In other words, columns 2 and 3 form a table of values for the function $f(w) = 3*sqrt(w)/(2*sqrt(512))$, which we can plot using `geom_line` to graph $f(w)$. (This is similar to plotting y = x^2 using a table of values by computing pairs of (x, y) and connecting with a smooth curve.)
+
+According to week 2 + LLN, the histogram of the generated data should closely follow the density function, which describe how the values of $W$ occur. Let's plot the histogram of the generated data, and overlay with the probability density function of $W$ to confirm (note this is different from overlaying with the KDE, which uses the data to estimate the PDF if the PDF were missing).
+
+```{r}
+sim.w.hist <- ggplot(sim.w, aes(x=w, y=..density..))+
+  geom_histogram(fill='slateblue1', colour='black', bins=30)+
+  theme_classic()+
+  labs(title='Comparing Distn of Simulated Data to PDF', y='Density',
+       x='w', subtitle=TeX('$f(w) = \\, \\frac{3 \\sqrt{w}}{2\\sqrt{512}}$'))
+sim.w.hist+
+  geom_line(aes(x=w, y=y)) 
+
+```
+
+### Exercise:
+a) Write a function in R with input n that will generate n random observations from $f(x) = \cfrac{3}{2}(1-x^2), \, x \in [0, 1]$. 
+
+b) Use the function to simulate the sampling distribution of the standard deviation from a random sample of 7 observations. 
+
+c) Plot a histogram with KDE overlaid of the simulated sampling distribution.
+
+d) Use your simulation to find the probability $P(S_7 > 0.1)$

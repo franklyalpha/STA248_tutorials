@@ -1,0 +1,121 @@
+---
+title: "TUT2"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+fontfamily: mathpazo
+geometry: margin=1in
+header-includes: \usepackage{hyperref}
+fontsize: 11pt
+---
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(gridExtra)
+```
+
+```{r}
+set.seed(1010)
+resu10 <- c()
+ml10 <- c()
+for (i in c(1:1000)) {
+  n <- 10
+sample <- runif(n, min = 0, max = 1)
+trans_samp <- data.frame('x'= (-sample+1)^(-0.5)*3)
+beta <- (sum(trans_samp)/n)/2
+ml10 <- c(ml10, min(trans_samp))
+resu10 <- c(resu10, beta)
+}
+mean(ml10)
+var(ml10)
+#mean(resu10)
+#var(resu10)
+
+resu10t <- tibble(index=1:1000, resu10)
+gg10 <- ggplot(resu10t, aes(x=resu10))+geom_histogram(aes(y=..density..), binwidth = 0.5)+
+  labs(x='MOM estimator value', y='density', title='1000 simulations of MOM estimator, n=10', subtitle='n=10')
+ml10t <- tibble(index=1:1000, ml10)
+ggml10 <- ggplot(ml10t, aes(x=ml10))+geom_histogram(aes(y=..density..), bins=10)+
+  labs(x='ML estimator value', y='density', title='1000 simulations of ML estimator, n=10', subtitle='n=10')
+```
+
+
+```{r}
+set.seed(1010)
+resu50 <- c()
+ml50 <- c()
+  n <- 50
+for (i in c(1:1000)) {
+
+sample <- runif(n, min = 0, max = 1)
+trans_samp <- data.frame('x'= (-sample+1)^(-0.5)*3)
+beta <- (sum(trans_samp)/n)/2
+ml50 <- c(ml50, min(trans_samp))
+resu50 <- c(resu50, beta)
+}
+  mean(ml50)
+  var(ml50)
+#  mean(resu50)
+ # var(resu50)
+resu50t <- tibble(index=1:1000, resu50)
+gg50 <- ggplot(resu50t, aes(x=resu50))+geom_histogram(aes(y=..density..), binwidth = 0.5)+
+  labs(x='MOM estimator value', y='density', title='1000 simulations of MOM estimator, n=50', subtitle='n=50')
+  
+  ml50t <- tibble(index=1:1000, ml50)
+ggml50 <- ggplot(ml50t, aes(x=ml50))+geom_histogram(aes(y=..density..), bins=10)+
+  labs(x='ML estimator value', y='density', title='1000 simulations of ML estimator, n=50', subtitle='n=50')
+```
+```{r}
+set.seed(1010)
+resu100 <- c()
+ml100 <- c()
+  n <- 100
+for (i in c(1:1000)) {
+
+sample <- runif(n, min = 0, max = 1)
+trans_samp <- data.frame('x'= (-sample+1)^(-0.5)*3)
+ml100 <- c(ml100, min(trans_samp))
+beta <- (sum(trans_samp)/n)/2
+resu100 <- c(resu100, beta)
+}
+  mean(ml100)
+  var(ml100)
+#  mean(resu100)
+ # var(resu100)
+resu100t <- tibble(index=1:1000, resu100)
+gg100 <- ggplot(resu100t, aes(x=resu100))+geom_histogram(aes(y=..density..), binwidth = 0.5)+
+  labs(x='MOM estimator value', y='density', title='1000 simulations of MOM estimator, n=100', subtitle='n=100')
+  ml100t <- tibble(index=1:1000, ml100)
+ggml100 <- ggplot(ml10t, aes(x=ml100))+geom_histogram(aes(y=..density..), bins=10)+
+  labs(x='ML estimator value', y='density', title='1000 simulations of ML estimator, n=100', subtitle='n=100')
+```
+```{r}
+set.seed(1010)
+resu1000 <- c()
+ml1000 <- c()
+  n <- 1000
+for (i in c(1:1000)) {
+
+sample <- runif(n, min = 0, max = 1)
+trans_samp <- data.frame('x'= (-sample+1)^(-0.5)*3)
+ml1000 <- c(ml1000, min(trans_samp))
+beta <- (sum(trans_samp)/n)/2
+resu1000 <- c(resu1000, beta)
+}
+  mean(ml1000)
+  var(ml1000)
+#mean(resu1000)
+#var(resu1000)
+resu1000t <- tibble(index=1:1000, resu1000)
+gg1000 <- ggplot(resu1000t, aes(x=resu1000))+geom_histogram(aes(y=..density..), binwidth = 0.5)+
+  labs(x='MOM estimator value', y='density', title='1000 simulations of MOM estimator, n=1000', subtitle='n=1000')
+  ml1000t <- tibble(index=1:1000, ml1000)
+ggml1000 <- ggplot(ml1000t, aes(x=ml1000))+geom_histogram(aes(y=..density..), bins=10)+
+  labs(x='ML estimator value', y='density', title='1000 simulations of ML estimator, n=1000', subtitle='n=1000')
+```
+```{r}
+grid.arrange(gg10, gg50, gg100, gg1000)
+grid.arrange(ggml10, ggml50, ggml100, ggml1000)
+```

@@ -1,0 +1,148 @@
+---
+title: "tut4"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+fontfamily: mathpazo
+geometry: margin=1in
+header-includes: \usepackage{hyperref}
+fontsize: 11pt
+---
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+
+Simulation for 1(d): 
+```{r}
+
+set.seed(1014)
+B <- 100000
+counts0 <- 0
+for (i in 1:B) {
+  samp0 <- rexp(30, rate = 1/3)
+  
+  means0 <- mean(samp0)
+
+  if (means0 < 2.1){
+    counts0 <- counts0 + 1
+  }
+}
+
+counts0/B
+```
+Thus p-value is 0.0388 for one-sided test. 
+\newpage
+
+Simulation for 1(f):
+```{r}
+set.seed(1014)
+B <- 100000
+counts1 <- 0
+for (i in 1:B) {
+  samp1 <- rexp(30, rate = 1/3)
+  
+  means1 <- mean(samp1)
+  
+  if (means1 < 2.1 | means1 > 3.9){
+    counts1 <- counts1 + 1
+  }
+}
+
+counts1/B
+```
+Thus the resulting p-value is 0.0978 for a two-sided test. 
+\newpage
+
+
+Simulation for 2(b):
+```{r}
+set.seed(1011)
+counts2 <- 0
+# B = 100000
+for (j in 1:B) {
+  simulation2 <- rexp(30, rate = 1/2.7)
+  mean_sim2 <- mean(simulation2)
+
+  if(2 > mean_sim2 | mean_sim2 > 4){
+    counts2 <- counts2 + 1
+  }
+}
+
+counts2/100000
+```
+Thus the power is 0.075. 
+\newpage
+Simulation for 2(c)'s type-I error(as informal reference):
+```{r}
+set.seed(30)
+B <- 100000
+counts3 <- 0
+for (i in 1:B) {
+  samp3 <- rexp(30, rate = 1/3)
+  
+  means3 <- mean(samp3)
+  
+  if (means3 < 2 | means3 > 4){
+    counts3 <- counts3 + 1
+  }
+}
+
+counts3/B
+```
+
+\newpage
+Simulation for 2(d); first chunk is for type-I error, second chunk is for type-II error. 
+```{r}
+set.seed(30)
+# type-I error
+counts4 <- 0
+for (i in 1:B) {
+  samp4 <- rexp(100, rate = 1/3)
+  
+  means4 <- mean(samp4)
+    if (means4 < 2.45 | means4 > 3.55){
+    counts4 <- counts4 + 1
+  }
+}
+counts4/B
+```
+```{r}
+set.seed(1012)
+counts5 <- 0
+# B = 100000
+for (j in 1:B) {
+  simulation5 <- rexp(100, rate = 1/2.7)
+  mean_sim5 <- mean(simulation5)
+
+  if(2.45 > mean_sim5 | mean_sim5 > 3.55){
+    counts5 <- counts5 + 1
+  }
+}
+# power
+counts5/100000
+#type-II error
+1-counts5/100000
+```
+Thus with sample size INCRAESED from 30 to 100, type-I error doesn't change much; however type-II error decreases from 0.92 to 0.8209, and power increases from 0.075 to 0.1791. 
+\newpage
+
+Simulation for bonus part: (rejection region: $$X\leq 1.877$$)
+```{r}
+set.seed(1014)
+res <- 1.877
+counts6 <- 0
+# B = 100000
+for (j in 1:B) {
+  simulation6 <- rexp(30, rate = 1/2.7)
+  mean_sim6 <- mean(simulation6)
+
+  if(res > mean_sim6){
+    counts6 <- counts6 + 1
+  }
+}
+
+counts6/100000
+```
+Thus power is 0.0362
